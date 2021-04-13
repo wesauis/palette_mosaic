@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mosaic } from './components/mosaic/Mosaic';
 import './App.css';
+import timed from './timed';
 
 interface SelectedColor {
   color: string;
@@ -64,25 +65,30 @@ function App() {
 
   return (
     <>
+      <style>
+        .Mosaic{'{'}
+        {colors.map((color, index) => `--color-${index}: ${color};`)}
+        {'}'}
+      </style>
       <input
         className={'Picker'}
         type="color"
         ref={colorPickerRef}
-        onChange={(evt) => {
+        onChange={timed(100, (evt) => {
           const color = evt.target.value;
 
-          const colors_ = [...colors]
+          const colors_ = [...colors];
           colors_[index] = color;
-          setColors(colors_)
-        }}
+          setColors(colors_);
+        })}
       />
       <Mosaic
-        size={128}
-        colors={colors}
+        colorCount={colors.length}
+        pieceAmount={2048}
         onClick={(index) => {
-          setIndex(index)
-          colorPickerRef.current!.value = colors[index]
-          colorPickerRef.current?.click()
+          setIndex(index);
+          colorPickerRef.current!.value = colors[index];
+          colorPickerRef.current?.click();
         }}
       />
     </>
