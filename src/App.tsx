@@ -1,40 +1,91 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useRef, useState } from 'react';
+import { Mosaic } from './components/mosaic/Mosaic';
 import './App.css';
 
-interface AppProps {}
+interface SelectedColor {
+  color: string;
+  index: number;
+}
 
-function App({}: AppProps) {
-  // Create the count state.
-  const [count, setCount] = useState(0);
-  // Create the counter (+1 every second).
+function getParam<T>(
+  param: string,
+  check: (parsed: T) => boolean,
+  default_: T,
+): T {
+  const value = new URLSearchParams(location.search).get(param);
+
+  console.debug(param, '->', value);
+
+  if (value !== null) {
+    try {
+      const parsed = JSON.parse(value) as T;
+
+      if (check(parsed)) {
+        return parsed;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  return default_;
+}
+
+function App() {
+  const [colors, setColors] = useState(
+    getParam<string[]>('colors', (arr) => arr.length > 0, [
+      '#6a737d',
+      '#babfc4',
+      '#e3e5e8',
+      '#c792ea',
+      '#ffd46c',
+      '#d9b1d9',
+      '#6a737d',
+      '#babfc4',
+      '#e3e5e8',
+    ]),
+  );
+
+  const [index, setIndex] = useState(0);
+
+  const colorPickerRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
-    const timer = setTimeout(() => setCount(count + 1), 1000);
-    return () => clearTimeout(timer);
-  }, [count, setCount]);
-  // Return the App component.
+    const url = new URL(location.href);
+
+    url.searchParams.set('colors', JSON.stringify(colors));
+
+    window.history.replaceState(
+      { path: url.toString() },
+      document.title,
+      url.toString(),
+    );
+  }, [colors]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <p>
-          Page has been open for <code>{count}</code> seconds.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </p>
-      </header>
-    </div>
+    <>
+      <input
+        className={'Picker'}
+        type="color"
+        ref={colorPickerRef}
+        onChange={(evt) => {
+          const color = evt.target.value;
+
+          const colors_ = [...colors]
+          colors_[index] = color;
+          setColors(colors_)
+        }}
+      />
+      <Mosaic
+        size={128}
+        colors={colors}
+        onClick={(index) => {
+          setIndex(index)
+          colorPickerRef.current!.value = colors[index]
+          colorPickerRef.current?.click()
+        }}
+      />
+    </>
   );
 }
 
